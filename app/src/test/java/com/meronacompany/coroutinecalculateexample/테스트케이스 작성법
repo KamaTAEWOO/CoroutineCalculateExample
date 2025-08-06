@@ -1,0 +1,102 @@
+// 테스트 케이스 작성법
+
+/**
+ * ✅ 테스트 케이스란?
+ * 테스트 케이스(Test Case)는 코드의 특정 기능/로직이 정상적으로 동작하는지 검증하기 위해 작성하는 코드입니다.
+ * 일반적으로 유닛 테스트, 통합 테스트, UI 테스트 등이 있으며, 여기서는 유닛 테스트 중심으로 설명합니다.
+ */
+
+/**
+ * 📦 JUnit 및 코루틴 테스트 어노테이션 정리
+ *
+ * @Test             : 테스트 메서드 표시
+ * @Before           : 각 테스트 전 실행 (JUnit4)
+ * @After            : 각 테스트 후 실행 (JUnit4)
+ * @BeforeEach       : 각 테스트 전 실행 (JUnit5)
+ * @AfterEach        : 각 테스트 후 실행 (JUnit5)
+ * @BeforeClass      : 모든 테스트 전에 1회 실행
+ * @AfterClass       : 모든 테스트 후에 1회 실행
+ * @Ignore           : 해당 테스트 무시
+ * @ParameterizedTest: 여러 값에 대해 반복 테스트 (JUnit5)
+ * @RunWith          : 테스트 실행기 설정 (ex: Mockito 사용 시)
+ */
+
+/**
+ * ✅ Gradle 의존성 추가 예시 (JUnit4 기준)
+ *
+ * testImplementation 'junit:junit:4.13.2'
+ * testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
+ * testImplementation 'org.mockito:mockito-core:4.8.1'
+ */
+
+/**
+ * ✍️ 기본 유닛 테스트 예시
+ */
+class Calculator {
+    fun add(a: Int, b: Int): Int = a + b
+}
+
+class CalculatorTest {
+
+    private lateinit var calculator: Calculator
+
+    @Before
+    fun setUp() {
+        calculator = Calculator()
+    }
+
+    @Test
+    fun `더하기 기능이 정상 동작한다`() {
+        val result = calculator.add(2, 3)
+        assertEquals(5, result)
+    }
+}
+
+/**
+ * 🧪 코루틴 테스트 예시
+ */
+class CoroutineTest {
+
+    @Test
+    fun `코루틴이 100ms 후에 값을 반환한다`() = runTest {
+        val result = async {
+            delay(100)
+            return@async "완료"
+        }
+        assertEquals("완료", result.await())
+    }
+}
+
+/**
+ * 🧩 예외 테스트 예시
+ */
+class ExceptionTest {
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `음수를 넣으면 예외를 던진다`() {
+        SomeClass().requirePositive(-1)
+    }
+
+    @Test
+    fun `예외를 assertThrows로 확인`() {
+        assertThrows<IllegalArgumentException> {
+            SomeClass().requirePositive(-1)
+        }
+    }
+}
+
+/**
+ * 📌 Mockito를 활용한 테스트 예시
+ */
+@RunWith(MockitoJUnitRunner::class)
+class LoginTest {
+
+    @Mock lateinit var repository: UserRepository
+    @InjectMocks lateinit var loginManager: LoginManager
+
+    @Test
+    fun `로그인이 성공하면 true를 반환`() {
+        `when`(repository.login("id", "pw")).thenReturn(true)
+        assertTrue(loginManager.login("id", "pw"))
+    }
+}
