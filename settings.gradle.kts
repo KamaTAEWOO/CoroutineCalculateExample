@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "CoroutineCalculateExample"
 include(":app")
+include(":noteBook")
