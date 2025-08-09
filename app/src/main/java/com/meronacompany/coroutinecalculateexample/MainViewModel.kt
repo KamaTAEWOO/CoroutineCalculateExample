@@ -1,39 +1,61 @@
 package com.meronacompany.coroutinecalculateexample
 
-class MainViewModel {
-    
+import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+
+class MainViewModel : ViewModel() {
+
     private var currentNumber = ""
     private var previousNumber = ""
     private var operator = ""
     private var result = 0.0
-    
+    private val calcMutex = Mutex()
+
+    private val _display = MutableStateFlow("0")
+    val display: StateFlow<String> = _display
+
     fun getCurrentDisplay(): String {
-        return if (currentNumber.isEmpty()) "0" else currentNumber
+        return _display.value
     }
-    
-    fun inputNumber(number: String) {
-        currentNumber += number
-    }
-    
-    fun inputOperator(op: String) {
-        if (currentNumber.isNotEmpty()) {
-            if (previousNumber.isNotEmpty() && operator.isNotEmpty()) {
-                calculate()
+
+    suspend fun inputNumber(number: String) {
+        withContext(Dispatchers.Default) {
+            calcMutex.withLock {
+                currentNumber += number
+                _display.value = currentNumber.ifEmpty { "0" }
             }
-            previousNumber = currentNumber
-            currentNumber = ""
-            operator = op
         }
     }
-    
-    fun calculate(): Double {
+
+    suspend fun inputOperator(op: String) {
+        withContext(Dispatchers.Default) {
+            calcMutex.withLock {
+                if (currentNumber.isNotEmpty()) {
+                    if (previousNumber.isNotEmpty() && operator.isNotEmpty()) {
+                        computeLocked()
+                    }
+                    previousNumber = currentNumber
+                    currentNumber = ""
+                    _display.value = "0"
+                }
+                operator = op
+            }
+        }
+    }
+
+    private fun computeLocked(): Double {
         if (previousNumber.isEmpty() || currentNumber.isEmpty() || operator.isEmpty()) {
             return result
         }
-        
+
         val prev = previousNumber.toDoubleOrNull() ?: 0.0
         val current = currentNumber.toDoubleOrNull() ?: 0.0
-        
+
         result = when (operator) {
             "+" -> prev + current
             "-" -> prev - current
@@ -42,37 +64,59 @@ class MainViewModel {
             "%" -> prev % current
             else -> current
         }
-        
+
         currentNumber = if (result == result.toInt().toDouble()) {
             result.toInt().toString()
         } else {
             result.toString()
         }
+        _display.value = currentNumber.ifEmpty { "0" }
         previousNumber = ""
         operator = ""
-        
+
         return result
     }
-    
-    fun delete() {
-        if (currentNumber.isNotEmpty()) {
-            currentNumber = currentNumber.dropLast(1)
+
+    suspend fun calculate(): Double = withContext(Dispatchers.Default) {
+        calcMutex.withLock {
+            computeLocked()
         }
     }
-    
-    fun clear() {
-        currentNumber = ""
-        previousNumber = ""
-        operator = ""
-        result = 0.0
+
+    suspend fun delete() {
+        withContext(Dispatchers.Default) {
+            calcMutex.withLock {
+                if (currentNumber.isNotEmpty()) {
+                    currentNumber = currentNumber.dropLast(1)
+                    _display.value = currentNumber.ifEmpty { "0" }
+                }
+            }
+        }
     }
-    
-    fun inputDot() {
-        if (!currentNumber.contains(".")) {
-            if (currentNumber.isEmpty()) {
-                currentNumber = "0."
-            } else {
-                currentNumber += "."
+
+    suspend fun clear() {
+        withContext(Dispatchers.Default) {
+            calcMutex.withLock {
+                currentNumber = ""
+                previousNumber = ""
+                operator = ""
+                result = 0.0
+                _display.value = "0"
+            }
+        }
+    }
+
+    suspend fun inputDot() {
+        withContext(Dispatchers.Default) {
+            calcMutex.withLock {
+                if (!currentNumber.contains(".")) {
+                    currentNumber = if (currentNumber.isEmpty()) {
+                        "0."
+                    } else {
+                        currentNumber + "."
+                    }
+                    _display.value = currentNumber
+                }
             }
         }
     }
