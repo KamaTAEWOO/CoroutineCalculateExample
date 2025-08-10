@@ -40,4 +40,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    // rxjava
+    implementation(libs.rxjava3)
+    implementation(libs.rxandroid3)
 }
