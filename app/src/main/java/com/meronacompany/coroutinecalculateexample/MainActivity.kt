@@ -77,15 +77,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun inputOperator(operator: String) {
+        Log.d("MainActivity", "Input operator: $operator")
+        lifecycleScope.launch {
+            try {
+                viewModel.inputOperator(operator)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error inputting operator: $operator", e)
+            }
+        }
     }
 
     private fun inputDot() {
     }
 
     private fun calculate() {
+        Log.d("MainActivity", "Calculate result")
+        lifecycleScope.launch {
+            try {
+                viewModel.calculate()
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error calculating result", e)
+            }
+        }
     }
 
     private fun delete() {
+        Log.d("MainActivity", "Delete last character")
+        lifecycleScope.launch {
+            try {
+                viewModel.delete()
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error deleting last character", e)
+            }
+        }
     }
 
     private fun clear() {
