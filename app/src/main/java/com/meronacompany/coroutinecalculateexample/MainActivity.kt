@@ -1,10 +1,15 @@
 package com.meronacompany.coroutinecalculateexample
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,6 +28,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun initViews() {
         display = findViewById(R.id.display)
+        // viewModel displayText
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.displayText.collect { value ->
+                    display.text = value
+                }
+            }
+        }
     }
 
     private fun setupClickListeners() {
@@ -53,6 +66,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun inputNumber(number: String) {
+        Log.d("MainActivity", "Input number: $number")
+        lifecycleScope.launch {
+            try {
+               viewModel.inputNumber(number)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error inputting number: $number", e)
+            }
+        }
     }
 
     private fun inputOperator(operator: String) {
